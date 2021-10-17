@@ -1,7 +1,6 @@
-Zzzz {
-}
 
-ZzzzBaskil {
+
+ZzzzzzzzzzzzBones {
 	var <>s;
 	var <>g;
 	var <>b;
@@ -10,9 +9,9 @@ ZzzzBaskil {
 	var <>buf;
 	var <>out;
 
-	var <>z; // last state;
-	var <>h; // state history
-	var <>rs; // sequencing routines
+	var <>z;
+	var <>h;
+	var <>rs;
 
 	*new { ^super.new.init }
 
@@ -60,22 +59,22 @@ ZzzzBaskil {
 		rs = List.new;
 	}
 
-	cap {
-		arg ch=1;
+	cave {
+		arg pre=0, ch=1;
 		z.cap0 = SystemClock.seconds;
 		"cap: ".post; z.postln;
 		Synth.new(\ZzzzBaskil_rec1, [\ch, ch, \buf, buf.bufnum], g, \addBefore);
 	}
-
+/*
 	dub {
-		arg ch=1;
-		Synth.new(\ZzzzBaskil_rec1, [\ch, ch, \buf, buf.bufnum, \pre, 1], g);
+		arg ch=1, pre=1;
+		Synth.new(\ZzzzBaskil_rec1, [\ch, ch, \buf, buf.bufnum, \pre, pre], g);
 		z.cap0 = SystemClock.seconds;
 		"dub: ".post; z.postln;
-	}
+	}*/
 
-	back {
-		arg rate=1, amp= -12, hpf=10, win;
+	smash {
+		arg rate=1, amp= -12, hpf=10, lpf=12000, win;
 		var now, start, end;
 		now = SystemClock.seconds;
 		end = now - z.cap0;
@@ -102,7 +101,7 @@ ZzzzBaskil {
 	}
 
 	again {
-		arg rate = nil, amp= -12;
+		arg rate = nil, amp= -12, hpf=10;
 		if (rate.notNil, {
 			z.rat = rate;
 		}, {
@@ -115,9 +114,10 @@ ZzzzBaskil {
 		], g);
 	}
 
-	redos {
-		arg rmul=1, dtmul=1, amp= -12;
-		var r = Routine {
+	relive {
+		arg rmul=1, dtmul=1, amp= -12, lpf;
+		var e = ();
+		e.r = Routine {
 			inf.do {
 				h.do({
 					arg ev;
@@ -129,33 +129,28 @@ ZzzzBaskil {
 				});
 			}
 		}.play;
-		rs.add(r);
-
+		rs.add(e);
 	}
 
-	stoprs {
-		rs.do({ arg r; r.stop; });
+	lethe {
+		rs.do({ arg e; e.r.stop; });
+		rs = List.new;
 	}
 
 }
 
 
-ZzzzWorch {
-	var <>buf;
-
-}
-
-ZzzzRakt {
+ZzzzzzzzzzzzRack {
 	classvar <didInit;
 	classvar <>h, <t0;
 	classvar <win, <txt;
 
 	*initClass { didInit = false; }
 
-	*init {
+	*take {
 		if (didInit.not, {
 			this.initDoc;
-			this.initWin;
+			//this.initWin;
 			didInit = true;
 		});
 	}
@@ -174,41 +169,162 @@ ZzzzRakt {
 		});
 	}
 
-	*initWin {
-		var h=256, w=256;
-		postln("ZzzzRakt.initWin");
-		win = Window("-",  Rect(128, 64, w, h));
-		txt = StaticText(win, Rect(0, 0, w, h));
-		txt.background_(Color.black);
-		txt.stringColor_(Color.white);
-		win.alwaysOnTop_(true);
-		win.front;
+	// well, this stuff crashes sclang eventually.
+	// *initWin {
+	// 	var h=256, w=256;
+	// 	postln("ZzzzRakt.initWin");
+	// 	win = Window("-",  Rect(128, 64, w, h));
+	// 	txt = StaticText(win, Rect(0, 0, w, h));
+	// 	txt.background_(Color.black);
+	// 	txt.stringColor_(Color.white);
+	// 	win.alwaysOnTop_(true);
+	// 	win.front;
+	// }
+	//
+	// *fresh {
+	// 	var i, n, str, key, ch;
+	// 	n = h.size;
+	// 	n.postln;
+	// 	str = "";
+	// 	i=(n-11).max(0);
+	// 	while({i<n}, {
+	// 		key = h[i][1];
+	// 		ch = switch(key,
+	// 			{65362}, {"↑"},
+	// 			{65364}, {"↓"},
+	// 			{65361}, {"←"},
+	// 			{65363}, {"→"},
+	// 			{65505}, {"⇧"},
+	// 			{65506}, {"⇧"},
+	// 			{65506}, {"⇧"},
+	// 			{65293}, {"¬"},
+	// 			{""++key.asAscii}
+	// 		);
+	// 	45	str = str ++ ch ++ "\t" ++ h[i][0] ++ "\n";
+	// 		i = i + 1;
+	// 	});
+	// 	txt.string_(str);
+	// 	//h.postln;
+	// 	nil
+	// }
+}
+
+ZzzzzzzzzzzzMond {
+	var <>q, <>qfn, <>h;
+	var <>seqr;
+	var <mo;
+	var <>map;
+	var <>kccount;
+	var <>numdf= 48;
+	var <>veldf= 40;
+
+	*initClass {
+		MIDIClient.init;
 	}
 
-	*fresh {
-		var i, n, str, key, ch;
-		n = h.size;
-		n.postln;
-		str = "";
-		i=(n-11).max(0);
-		while({i<n}, {
-			key = h[i][1];
-			ch = switch(key,
-				{65362}, {"↑"},
-				{65364}, {"↓"},
-				{65361}, {"←"},
-				{65363}, {"→"},
-				{65505}, {"⇧"},
-				{65506}, {"⇧"},
-				{65506}, {"⇧"},
-				{65293}, {"¬"},
-				{""++key.asAscii}
-			);
-			str = str ++ ch ++ "\t" ++ h[i][0] ++ "\n";
-			i = i + 1;
-		});
-		txt.string_(str);
-		//h.postln;
-		nil
+	*new { ^super.new.init }
+
+
+	init {
+		MIDIClient.destinations.do({|ep|ep.postln;});
+		mo = MIDIOut(0);
+		mo.connect(1);
+
+		kccount = Dictionary.new;
+		map = Dictionary.new;
+
+		qfn = { arg dt, kc;
+			var m = map[kc.asSymbol];
+			var dur = 0.5;
+			var num = numdf;
+			var vel = veldf;
+			[kc, m].postln;
+			m.keys.do({ arg k;
+				var cc, val, ival;
+				val = m[k];
+				[k, val].postln;
+				cc = SE02CC.cc[k];
+				if (cc.isNil, {
+					if(k == \num, { num = val; });
+					if(k == \vel, { vel = val; });
+					if(k == \dur, { dur = val; });
+				}, {
+					ival = (val * 128.0).min(127.99999).floor;
+					[cc, ival].postln;
+					mo.control(0, cc, ival);
+				});
+			});
+			mo.noteOn(0, num, vel);
+			(dt*dur).wait;
+			mo.noteOff(0, num, vel);
+			(dt*(1-dur)).wait;
+		};
 	}
+
+	make {
+		arg ah, t_drop_min=0.03, t_wrap_min=(1/8), t_wrap_max=(7/8), exclude_zone=[0.45, 0.55], r=2;
+		h = ah;
+		q = h.select({|x|x[0]>=t_drop_min});
+		q = q.collect({ arg x;
+			var dt = x[0];
+			while({dt<t_wrap_min},{dt=dt * r});
+			while({dt>t_wrap_max},{dt=dt / r});
+			if ((dt > exclude_zone[0]) && (dt < exclude_zone[1]), {
+				if (0.5.coin, {
+					while (
+						{(dt > exclude_zone[0]) && (dt < exclude_zone[1])},
+						{dt = dt * r}
+					);
+				}, {
+					while (
+						{(dt > exclude_zone[0]) && (dt < exclude_zone[1])},
+						{dt = dt / r}
+					);
+				});
+			});
+			[dt,x[1]]
+		});
+		q
+	}
+
+	go {
+		seqr = Routine {
+			var i = 0;
+			inf.do {
+				var ev = q.wrapAt(i);
+				qfn.value(ev[0], ev[1]);
+				i = i + 1;
+				if (i > q.size, { i = 0; });
+			}
+		}.play;
+	}
+
+	stop {
+		seqr.stop;
+	}
+
+	mapdoc { arg ah;
+		var doc= Document.new;
+		var ksorted;
+
+		if (ah.notNil, { h = ah; });
+		h.do({ arg ev;
+			var kc = ev[1].asSymbol;
+			if (kccount[kc].notNil, {
+				kccount[kc] = kccount[kc] + 1;
+			}, {
+				kccount[kc] = 1;
+			});
+			map[kc] = Event.new;
+		});
+		map.postln;
+		ksorted = map.keys.asArray;
+		ksorted = ksorted.sort({arg a,b; kccount[a]>kccount[b]});
+		ksorted.postln;
+		ksorted.do({ arg k;
+			doc.insertText("/* "++kccount[k]++"*/ z.m.map[\\"++k++"] = ();\n");
+		});
+	}
+
+
 }
